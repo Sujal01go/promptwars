@@ -41,6 +41,25 @@ vi.mock('@google/generative-ai', () => ({
   })),
 }));
 
+// Mock react-google-charts
+vi.mock('react-google-charts', () => ({
+  Chart: () => <div data-testid="google-chart">Mock Chart</div>,
+}));
+
+// Mock Firebase
+vi.mock('./firebase', () => ({
+  db: {},
+}));
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  addDoc: vi.fn(),
+  serverTimestamp: vi.fn(),
+  query: vi.fn(),
+  orderBy: vi.fn(),
+  onSnapshot: vi.fn(() => vi.fn()), // Return an unsubscribe function
+  limit: vi.fn(),
+}));
+
 describe('🏠 App Rendering', () => {
   it('renders the hero section heading', () => {
     render(<App />);
@@ -97,6 +116,17 @@ describe('🧭 Navigation', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /ai guide/i }));
     expect(screen.getAllByText(/Google Gemini/i).length).toBeGreaterThan(0);
+  });
+
+  it('has Map nav button', () => {
+    render(<App />);
+    expect(screen.getByRole('button', { name: /^map$/i })).toBeInTheDocument();
+  });
+
+  it('navigates to Map tab on click', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /^map$/i }));
+    expect(screen.getByText(/Polling Map/i)).toBeInTheDocument();
   });
 });
 

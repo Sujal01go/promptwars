@@ -1,6 +1,7 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const partyColors = {
   'BJP': '#FF6B35',
@@ -85,3 +86,15 @@ export default function MapChart({ stateRulings }) {
     </div>
   );
 }
+
+MapChart.propTypes = {
+  stateRulings: PropTypes.arrayOf(
+    PropTypes.shape({
+      state: PropTypes.string.isRequired,
+      party: PropTypes.string.isRequired,
+      alliance: PropTypes.string.isRequired,
+      chiefMinister: PropTypes.string.isRequired,
+      color: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Static data constants for the India Elections Assistant.
  * Centralising data here keeps App.jsx lean and makes updates easy.
  */
@@ -214,3 +214,21 @@ export const ELECTION_RULES = [
 ];
 
 
+// ---------------------------------------------------------------------------
+// Election Results (for Google Charts)
+// ---------------------------------------------------------------------------
+
+/** @type {Array<[string, number]>} */
+export const LOK_SABHA_2024_RESULTS = [
+  ['Party', 'Seats'],
+  ['BJP', 240],
+  ['INC', 99],
+  ['SP', 37],
+  ['TMC', 29],
+  ['DMK', 22],
+  ['TDP', 16],
+  ['JD(U)', 12],
+  ['SHSUBT', 9],
+  ['NCPSP', 8],
+  ['Others', 71],
+];

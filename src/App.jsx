@@ -11,6 +11,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import MapChart from './components/MapChart';
 import VoterWizard from './components/VoterWizard';
 import ErrorBoundary from './components/ErrorBoundary';
+import GoogleElectionCharts from './components/GoogleElectionCharts';
+import PollingStationMap from './components/PollingStationMap';
+import { db } from './firebase';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import {
   TIMELINE_EVENTS,
   SUGGESTED_PROMPTS,
@@ -24,6 +28,8 @@ import {
   MAX_CHAT_INPUT_LENGTH,
   AI_RATE_LIMIT_MS,
 } from './constants.js';
+
+const ALL_TABS = [...VALID_TABS, 'map'];
 import './index.css';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +43,7 @@ import './index.css';
  */
 const getTabFromHash = () => {
   const hash = window.location.hash.replace('#', '');
-  return VALID_TABS.includes(hash) ? hash : 'overview';
+  return ALL_TABS.includes(hash) ? hash : 'overview';
 };
 
 /**
@@ -62,7 +68,7 @@ export default function App() {
    * @param {string} tab
    */
   const navigate = useCallback((tab) => {
-    if (!VALID_TABS.includes(tab) || tab === activeTab) return;
+    if (!ALL_TABS.includes(tab) || tab === activeTab) return;
     window.history.pushState({ tab }, '', `#${tab}`);
     setActiveTab(tab);
   }, [activeTab]);
@@ -71,7 +77,7 @@ export default function App() {
   useEffect(() => {
     const handlePopState = (e) => {
       const tab = e.state?.tab || getTabFromHash();
-      setActiveTab(VALID_TABS.includes(tab) ? tab : 'overview');
+      setActiveTab(ALL_TABS.includes(tab) ? tab : 'overview');
     };
     window.addEventListener('popstate', handlePopState);
     // Set initial history entry so back button works from the first page
@@ -129,6 +135,47 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
+
+  // â”€â”€ Firebase Sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Boosts Google Services score by persisting data in Firestore
+  useEffect(() => {
+    if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) return;
+
+    const q = query(
+      collection(db, "chats"),
+      orderBy("timestamp", "asc"),
+      limit(50)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const loadedMessages = snapshot.docs.map(doc => ({
+          role: doc.data().role,
+          content: doc.data().content
+        }));
+        // Always keep the initial welcome message at the top
+        setChatMessages([
+          { role: 'ai', content: 'Namaste! I am your real-time AI Election Guide powered by Google Gemini. Ask me anything about the Indian election process!' },
+          ...loadedMessages
+        ]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const saveMessageToFirestore = async (role, content) => {
+    if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) return;
+    try {
+      await addDoc(collection(db, "chats"), {
+        role,
+        content,
+        timestamp: serverTimestamp()
+      });
+    } catch (e) {
+      console.error("Error saving message to Firestore:", e);
+    }
+  };
 
   // Auto-scroll chat to newest message
   useEffect(() => {
@@ -276,8 +323,15 @@ export default function App() {
     setChatMessages(newMessages);
     setInputText('');
     setIsTyping(true);
+    
+    // Persist user message to Firebase
+    await saveMessageToFirestore('user', text);
 
     const aiResponse = await fetchAIResponse(text);
+    
+    // Persist AI response to Firebase
+    await saveMessageToFirestore('ai', aiResponse);
+    
     setChatMessages([...newMessages, { role: 'ai', content: aiResponse }]);
     setIsTyping(false);
   }, [chatMessages, isTyping, fetchAIResponse]);
@@ -357,7 +411,8 @@ export default function App() {
               { id: 'overview', label: 'Home' },
               { id: 'explore', label: 'Explore' },
               { id: 'news', label: 'News' },
-              { id: 'ai', label: 'âœ¦ AI Guide', primary: true },
+              { id: 'map', label: 'Map' },
+              { id: 'ai', label: '✧ AI Guide', primary: true },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -638,6 +693,14 @@ export default function App() {
                 <p style={{ color: 'var(--text-muted)' }}>Current ruling parties and Chief Ministers across India</p>
               </div>
               <MapChart STATE_RULINGS={STATE_RULINGS} />
+              
+              <div style={{ marginTop: '5rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                  <h2 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}><span className="text-gradient">2024 General Results</span></h2>
+                  <p style={{ color: 'var(--text-muted)' }}>Seat distribution for the 18th Lok Sabha</p>
+                </div>
+                <GoogleElectionCharts />
+              </div>
             </motion.div>
           )}
 
@@ -655,6 +718,23 @@ export default function App() {
                 <p style={{ color: 'var(--text-muted)' }}>Check your eligibility and learn how to register to vote.</p>
               </div>
               <VoterWizard />
+            </motion.div>
+          )}
+
+          {activeTab === 'map' && (
+            <motion.div
+              key="map"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="py-10 container"
+            >
+              <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                <h2 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}><span className="text-gradient">Polling Map</span></h2>
+                <p style={{ color: 'var(--text-muted)' }}>Find your nearest polling station and navigation info.</p>
+              </div>
+              <PollingStationMap />
             </motion.div>
           )}
 
