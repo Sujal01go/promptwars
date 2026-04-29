@@ -1,5 +1,5 @@
 /**
- * @fileoverview India Elections Assistant â€” main application component.
+ * @fileoverview India Elections Assistant — main application component.
  * Integrates Google Gemini AI, multilingual support, state rulings,
  * election timeline, news feed, and a voter registration wizard.
  */
@@ -33,7 +33,7 @@ const ALL_TABS = [...VALID_TABS, 'map'];
 import './index.css';
 
 // ---------------------------------------------------------------------------
-// Route helper â€” outside component so it is not recreated on every render
+// Route helper — outside component so it is not recreated on every render
 // ---------------------------------------------------------------------------
 
 /**
@@ -243,7 +243,7 @@ export default function App() {
    */
   const fetchAIResponse = useCallback(async (userMessage) => {
     try {
-      // 1. Try Google Gemini (primary â€” preferred for competition scoring)
+      // 1. Try Google Gemini (primary — preferred for competition scoring)
       if (import.meta.env.VITE_GEMINI_API_KEY) {
         const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
@@ -269,7 +269,7 @@ export default function App() {
             console.warn(`[AI] Gemini model "${modelName}" unavailable, trying nextâ€¦`);
           }
         }
-        console.warn('[AI] All Gemini models failed â€” falling back to Groq.');
+        console.warn('[AI] All Gemini models failed — falling back to Groq.');
       }
 
       // 2. Fallback: Groq (Llama-3)
@@ -361,9 +361,9 @@ export default function App() {
                 }}
                 aria-label="Select language"
               >
-                <span>ðŸŒ</span>
+                <span>🌐</span>
                 <span>{LANGUAGES.find(l => l.code === activeLang)?.label.split(' ').slice(0,2).join(' ') || 'Translate'}</span>
-                <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>â–¼</span>
+                <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
               </button>
 
               {showLangPicker && (
@@ -396,7 +396,7 @@ export default function App() {
                       onMouseLeave={e => e.currentTarget.style.background = lang.code === activeLang ? 'rgba(255,153,51,0.1)' : 'none'}
                     >
                       <span>{lang.label}</span>
-                      {lang.code === activeLang && <span style={{ fontSize: '0.8rem' }}>âœ“</span>}
+                      {lang.code === activeLang && <span style={{ fontSize: '0.8rem' }}>✓</span>}
                     </button>
                   ))}
                 </motion.div>
@@ -529,7 +529,7 @@ export default function App() {
                         <Calendar size={24} color="#3b82f6" />
                       </div>
                       <h3>The 2 Kilometer Rule</h3>
-                      <p>The Election Commission mandates that no voter should have to travel more than 2 km to vote. Polling stations are set up in remote forests, mountains, and islandsâ€”sometimes even for a single voter!</p>
+                      <p>The Election Commission mandates that no voter should have to travel more than 2 km to vote. Polling stations are set up in remote forests, mountains, and islands—sometimes even for a single voter!</p>
                     </div>
 
                     <div className="bento-item">
@@ -752,41 +752,41 @@ export default function App() {
                   <span className="text-gradient">How Indian Elections Work</span>
                 </h2>
                 <p style={{ color: 'var(--text-muted)', maxWidth: '640px', margin: '0 auto' }}>
-                  A complete, beginner-to-expert guide to India's democratic system â€” from the Constitution to counting day.
+                  A complete, beginner-to-expert guide to India's democratic system — from the Constitution to counting day.
                 </p>
               </div>
 
               {[
                 {
-                  title: "ðŸ›ï¸ India's Democratic Foundation",
+                  title: "🏛️ India's Democratic Foundation",
                   color: '#FF9933',
                   items: [
                     { q: "What kind of democracy is India?", a: "India is a Sovereign, Socialist, Secular, Democratic Republic. It follows a Parliamentary system of government modeled on the British Westminster system, where the executive (Cabinet) is accountable to the legislature (Parliament)." },
                     { q: "What is the Constitution of India?", a: "Adopted on 26 January 1950, India's Constitution is the supreme law of the land. It establishes the framework for governance, fundamental rights of citizens, and the structure of Parliament, state legislatures, and the judiciary." },
-                    { q: "What are the three branches of Indian government?", a: "Legislature (Parliament) â€” makes laws. Executive (President, PM, Cabinet) â€” implements laws. Judiciary (Supreme Court, High Courts) â€” interprets laws and safeguards the Constitution." },
+                    { q: "What are the three branches of Indian government?", a: "Legislature (Parliament) — makes laws. Executive (President, PM, Cabinet) — implements laws. Judiciary (Supreme Court, High Courts) — interprets laws and safeguards the Constitution." },
                   ]
                 },
                 {
-                  title: "ðŸ¦ Parliament of India",
+                  title: "🏛️ Parliament of India",
                   color: '#138808',
                   items: [
                     { q: "What is Parliament?", a: "Parliament (Sansad) is India's supreme legislative body located in New Delhi. It consists of three parts: the President of India, the Lok Sabha (Lower House), and the Rajya Sabha (Upper House)." },
                     { q: "What is the Lok Sabha?", a: "The Lok Sabha ('House of the People') is the lower house of Parliament. It has 543 directly elected members (MPs), each representing one parliamentary constituency. A party or coalition needs at least 272 seats to command a majority and form the government. Members serve a 5-year term." },
-                    { q: "What is the Rajya Sabha?", a: "The Rajya Sabha ('Council of States') is the upper house. It has 245 members â€” 233 are elected by State and UT legislative assemblies (indirect election), and 12 are nominated by the President for their expertise. It is a permanent house that is never dissolved; one-third of its members retire every 2 years." },
+                    { q: "What is the Rajya Sabha?", a: "The Rajya Sabha ('Council of States') is the upper house. It has 245 members — 233 are elected by State and UT legislative assemblies (indirect election), and 12 are nominated by the President for their expertise. It is a permanent house that is never dissolved; one-third of its members retire every 2 years." },
                     { q: "What are the powers of Parliament?", a: "Parliament makes laws on subjects in the Union List (defense, foreign affairs, etc.) and Concurrent List (education, forests, etc.). It passes the national budget, approves treaties, can declare war, and holds the government accountable through Question Hour, debates, and no-confidence motions." },
                   ]
                 },
                 {
-                  title: "ðŸ‘‘ The President & Vice President",
+                  title: "👑 The President & Vice President",
                   color: '#6366f1',
                   items: [
                     { q: "What is the role of the President of India?", a: "The President is the constitutional head of state and the Supreme Commander of the Armed Forces. While largely a ceremonial role, the President appoints the Prime Minister, assents to bills, and has powers to promulgate ordinances. The President can also return a bill for reconsideration (except Money Bills)." },
-                    { q: "How is the President elected?", a: "The President is elected by an Electoral College consisting of elected members of both houses of Parliament AND elected members of all State Legislative Assemblies (Vidhan Sabhas). This is an indirect election â€” ordinary citizens do not vote directly for the President. The election uses the Single Transferable Vote method with proportional representation." },
+                    { q: "How is the President elected?", a: "The President is elected by an Electoral College consisting of elected members of both houses of Parliament AND elected members of all State Legislative Assemblies (Vidhan Sabhas). This is an indirect election — ordinary citizens do not vote directly for the President. The election uses the Single Transferable Vote method with proportional representation." },
                     { q: "What does the Vice President do?", a: "The Vice President is the ex-officio Chairman of the Rajya Sabha. In the event of the President's absence, death, or inability, the Vice President acts as President. The Vice President is also elected indirectly by members of an Electoral College of both Houses of Parliament." },
                   ]
                 },
                 {
-                  title: "ðŸ—³ï¸ How the Prime Minister is Elected",
+                  title: "🗳️ How the Prime Minister is Elected",
                   color: '#FF9933',
                   items: [
                     { q: "Are citizens voting directly for a PM?", a: "No. Indian citizens do NOT directly vote for the Prime Minister. They vote for their local Member of Parliament (MP). The leader of the party (or coalition) that commands a majority in the Lok Sabha (272+ seats) is then invited by the President to form the government and is sworn in as Prime Minister." },
@@ -795,25 +795,25 @@ export default function App() {
                   ]
                 },
                 {
-                  title: "ðŸ¢ State Governments & Legislatures",
+                  title: "🏛️ State Governments & Legislatures",
                   color: '#00B4D8',
                   items: [
                     { q: "What is the Vidhan Sabha?", a: "The Vidhan Sabha is the lower house of a State Legislature (equivalent to Lok Sabha at state level). Members of the Legislative Assembly (MLAs) are directly elected by citizens of each constituency within the state. The party with majority MLAs forms the state government." },
                     { q: "How is a Chief Minister elected?", a: "Similar to the PM, citizens vote for their local MLA, not directly for CM. The leader of the party with the majority in the Vidhan Sabha is appointed as Chief Minister by the Governor of the state." },
                     { q: "What is the Vidhan Parishad?", a: "The Vidhan Parishad is the upper house of a state legislature (like the Rajya Sabha). Only 6 states have it: Andhra Pradesh, Bihar, Karnataka, Maharashtra, Telangana, and Uttar Pradesh. Members are elected by MLAs, local bodies, graduates, and teachers, and some are nominated by the Governor." },
-                    { q: "What is the Governor's role?", a: "The Governor is the constitutional head of the state, appointed by the President of India. The Governor is the state-level equivalent of the President â€” a largely ceremonial role but with significant reserve powers, including recommending President's Rule if a state government loses its majority." },
+                    { q: "What is the Governor's role?", a: "The Governor is the constitutional head of the state, appointed by the President of India. The Governor is the state-level equivalent of the President — a largely ceremonial role but with significant reserve powers, including recommending President's Rule if a state government loses its majority." },
                   ]
                 },
                 {
-                  title: "ðŸ—ºï¸ Electoral Constituencies",
+                  title: "🗺️ Electoral Constituencies",
                   color: '#F4A261',
                   items: [
                     { q: "What is a constituency?", a: "India is divided into geographical areas called constituencies for election purposes. Each Lok Sabha constituency elects one MP. Each state is divided into Assembly constituencies, each electing one MLA. Delimitation (redrawing boundaries) is done periodically by a Delimitation Commission." },
-                    { q: "How many constituencies does India have?", a: "Lok Sabha: 543 parliamentary constituencies across India. Each state is further divided into Assembly constituencies â€” totaling 4,120+ state assembly segments across all states and UTs. Reserved constituencies exist for Scheduled Castes (SC) and Scheduled Tribes (ST) to ensure representation." },
+                    { q: "How many constituencies does India have?", a: "Lok Sabha: 543 parliamentary constituencies across India. Each state is further divided into Assembly constituencies — totaling 4,120+ state assembly segments across all states and UTs. Reserved constituencies exist for Scheduled Castes (SC) and Scheduled Tribes (ST) to ensure representation." },
                   ]
                 },
                 {
-                  title: "ðŸ“‹ Political Parties & Alliances",
+                  title: "📋 Political Parties & Alliances",
                   color: '#E63946',
                   items: [
                     { q: "What are national and state parties?", a: "A party is recognized as a 'National Party' by the Election Commission if it wins at least 2% of Lok Sabha seats from at least 3 states, or gets 6% of votes in 4 or more states. Others are 'State Parties'. National parties include BJP, INC, AAP, BSP, CPM, NCP, and TMC." },
@@ -822,31 +822,31 @@ export default function App() {
                   ]
                 },
                 {
-                  title: "ðŸ“£ The Election Commission of India (ECI)",
+                  title: "📢 The Election Commission of India (ECI)",
                   color: '#138808',
                   items: [
                     { q: "What is the ECI?", a: "The Election Commission of India is an autonomous constitutional authority responsible for administering all elections to Parliament and State Legislatures, as well as elections to the offices of President and Vice President. It was established on 25 January 1950." },
-                    { q: "Who heads the ECI?", a: "The ECI is headed by the Chief Election Commissioner (CEC) and assisted by Election Commissioners. They are appointed by the President and can only be removed through a process similar to removing a Supreme Court judge â€” ensuring independence from the ruling government." },
+                    { q: "Who heads the ECI?", a: "The ECI is headed by the Chief Election Commissioner (CEC) and assisted by Election Commissioners. They are appointed by the President and can only be removed through a process similar to removing a Supreme Court judge — ensuring independence from the ruling government." },
                     { q: "What are the ECI's major powers?", a: "The ECI can: announce election dates, enforce the Model Code of Conduct, transfer bureaucrats/police who may be biased, ban opinion polls during elections, order re-polling in booths where rigging occurs, recognize/de-recognize political parties, and even postpone elections in case of disasters." },
                   ]
                 },
                 {
-                  title: "âš¡ EVMs & the Voting Process",
+                  title: "⚡ EVMs & the Voting Process",
                   color: '#6366f1',
                   items: [
                     { q: "What is an EVM?", a: "An Electronic Voting Machine (EVM) is a standalone, tamper-proof electronic device used to record votes in India since 1999. It consists of two units: a Control Unit (with the polling officer) and a Balloting Unit (where the voter presses a button next to their candidate's name and symbol). EVMs have no internet connection and cannot be hacked remotely." },
-                    { q: "What is VVPAT?", a: "Voter Verifiable Paper Audit Trail (VVPAT) is a printer device attached to the EVM Balloting Unit. After a voter presses the button, a paper slip is printed showing the candidate's name, serial number, and symbol. This slip is visible through a glass window for 7 seconds, then automatically falls into a sealed box â€” allowing the voter to verify their vote." },
+                    { q: "What is VVPAT?", a: "Voter Verifiable Paper Audit Trail (VVPAT) is a printer device attached to the EVM Balloting Unit. After a voter presses the button, a paper slip is printed showing the candidate's name, serial number, and symbol. This slip is visible through a glass window for 7 seconds, then automatically falls into a sealed box — allowing the voter to verify their vote." },
                     { q: "How does polling work on election day?", a: "Polling stations are set up within 2km of every voter. Voter shows ID, their name is verified in the electoral roll, their finger is marked with indelible ink, and they proceed to the EVM to cast their vote privately. Booths have separate queues for men, women, and senior citizens/PwD voters." },
-                    { q: "What is NOTA?", a: "'None of the Above' (NOTA) is a ballot option introduced in 2013, allowing voters to formally reject all candidates. NOTA votes are counted and published but do not affect the result â€” the candidate with the most votes still wins even if NOTA gets more votes than all candidates." },
+                    { q: "What is NOTA?", a: "'None of the Above' (NOTA) is a ballot option introduced in 2013, allowing voters to formally reject all candidates. NOTA votes are counted and published but do not affect the result — the candidate with the most votes still wins even if NOTA gets more votes than all candidates." },
                   ]
                 },
                 {
-                  title: "ðŸ“Š Counting & Results",
+                  title: "📊 Counting & Results",
                   color: '#FF9933',
                   items: [
                     { q: "How are votes counted?", a: "Counting happens at a designated counting centre, typically on a single day after all polling phases are complete. EVMs are transported under strict security and kept in strong rooms. Candidates' counting agents are present throughout. Results are announced constituency-by-constituency and updated live on the ECI website." },
                     { q: "What is VVPAT verification during counting?", a: "The Supreme Court mandated that VVPAT slips from 5 randomly selected polling booths per constituency must be physically matched with EVM counts to verify accuracy. This adds a paper-based verification layer to the electronic count." },
-                    { q: "How is the winner determined?", a: "India uses the First-Past-the-Post (FPTP) system â€” the candidate with the most votes in a constituency wins, even if they don't have a majority. In case of a tie, a lottery (draw of lots) is conducted by the Returning Officer to determine the winner." },
+                    { q: "How is the winner determined?", a: "India uses the First-Past-the-Post (FPTP) system — the candidate with the most votes in a constituency wins, even if they don't have a majority. In case of a tie, a lottery (draw of lots) is conducted by the Returning Officer to determine the winner." },
                   ]
                 },
               ].map((section, sIdx) => (
@@ -877,7 +877,7 @@ export default function App() {
                           listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         }}>
                           <span>{item.q}</span>
-                          <span style={{ color: section.color, fontSize: '1.2rem', flexShrink: 0, marginLeft: '1rem' }}>ï¼‹</span>
+                          <span style={{ color: section.color, fontSize: '1.2rem', flexShrink: 0, marginLeft: '1rem' }}>+</span>
                         </summary>
                         <div style={{
                           padding: '0 1.25rem 1.25rem',
@@ -1067,9 +1067,9 @@ export default function App() {
           <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>An interactive educational guide built for Google Prompt Wars.</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', fontSize: '0.85rem' }}>
             <span style={{ color: 'var(--text)' }}>Powered by Vite + React</span>
-            <span>â€¢</span>
+            <span>•</span>
             <span style={{ color: 'var(--text)' }}>AI by Google Gemini &amp; Groq</span>
-            <span>â€¢</span>
+            <span>•</span>
             <span style={{ color: 'var(--text)' }}>Translated via Google Translate</span>
           </div>
         </div>

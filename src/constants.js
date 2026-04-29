@@ -119,17 +119,17 @@ export const STATE_RULINGS = [
 
 /** @type {Array<{code:string, label:string}>} */
 export const LANGUAGES = [
-  { code: 'en', label: 'ðŸ‡¬ðŸ‡§ English' },
-  { code: 'hi', label: 'ðŸ‡®ðŸ‡³ Hindi (à¤¹à¤¿à¤¨à¥à¤¦à¥€)' },
-  { code: 'bn', label: 'ðŸ‡®ðŸ‡³ Bengali (à¦¬à¦¾à¦‚à¦²à¦¾)' },
-  { code: 'te', label: 'ðŸ‡®ðŸ‡³ Telugu (à°¤à±†à°²à±à°—à±)' },
-  { code: 'mr', label: 'ðŸ‡®ðŸ‡³ Marathi (à¤®à¤°à¤¾à¤ à¥€)' },
-  { code: 'ta', label: 'ðŸ‡®ðŸ‡³ Tamil (à®¤à®®à®¿à®´à¯)' },
-  { code: 'gu', label: 'ðŸ‡®ðŸ‡³ Gujarati (àª—à«àªœàª°àª¾àª¤à«€)' },
-  { code: 'kn', label: 'ðŸ‡®ðŸ‡³ Kannada (à²•à²¨à³à²¨à²¡)' },
-  { code: 'ml', label: 'ðŸ‡®ðŸ‡³ Malayalam (à´®à´²à´¯à´¾à´³à´‚)' },
-  { code: 'pa', label: 'ðŸ‡®ðŸ‡³ Punjabi (à¨ªà©°à¨œà¨¾à¨¬à©€)' },
-  { code: 'ur', label: 'ðŸ‡®ðŸ‡³ Urdu (Ø§Ø±Ø¯Ùˆ)' },
+  { code: 'en', label: '🇬🇧 English' },
+  { code: 'hi', label: '🇮🇳 Hindi (हिन्दी)' },
+  { code: 'bn', label: '🇮🇳 Bengali (বাংলা)' },
+  { code: 'te', label: '🇮🇳 Telugu (తెలుగు)' },
+  { code: 'mr', label: '🇮🇳 Marathi (मराठी)' },
+  { code: 'ta', label: '🇮🇳 Tamil (தமிழ்)' },
+  { code: 'gu', label: '🇮🇳 Gujarati (ગુજરાતી)' },
+  { code: 'kn', label: '🇮🇳 Kannada (ಕನ್ನಡ)' },
+  { code: 'ml', label: '🇮🇳 Malayalam (മലയാളം)' },
+  { code: 'pa', label: '🇮🇳 Punjabi (ਪੰਜਾਬੀ)' },
+  { code: 'ur', label: '🇮🇳 Urdu (اردو)' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -182,9 +182,9 @@ export const ELECTION_RULES = [
     category: 'Campaigning Guidelines',
     rules: [
       { title: 'Model Code of Conduct (MCC)', description: 'A set of guidelines issued by the ECI regulating political parties and candidates prior to elections. It forbids ministers from combining official visits with electioneering and prevents the announcement of new financial grants.' },
-      { title: '48-Hour Campaign Silence',    description: 'Also known as the "Silence Period", all public campaigning â€” including rallies, loudspeakers, and television broadcasts â€” must strictly end 48 hours before polling begins.' },
+      { title: '48-Hour Campaign Silence',    description: 'Also known as the "Silence Period", all public campaigning — including rallies, loudspeakers, and television broadcasts — must strictly end 48 hours before polling begins.' },
       { title: 'Prohibition of Corrupt Practices', description: 'Bribing voters, appealing on grounds of religion or caste, and using government machinery for campaigns are legally classified as corrupt practices and can lead to disqualification.' },
-      { title: 'Expenditure Limits',          description: 'Candidates for Lok Sabha may spend up to â‚¹95 lakh; for State Assembly elections up to â‚¹40 lakh. All expenses must be disclosed in an account submitted to the ECI within 30 days of election results.' },
+      { title: 'Expenditure Limits',          description: 'Candidates for Lok Sabha may spend up to ₹95 lakh; for State Assembly elections up to ₹40 lakh. All expenses must be disclosed in an account submitted to the ECI within 30 days of election results.' },
     ],
   },
   {
@@ -199,7 +199,7 @@ export const ELECTION_RULES = [
   {
     category: 'EVM & Technology Rules',
     rules: [
-      { title: 'EVM Sealing & Custody Chain', description: 'After polling, EVMs are sealed in the presence of candidates/agents and stored in strong-rooms under 24Ã—7 security including CCTV surveillance, until counting day.' },
+      { title: 'EVM Sealing & Custody Chain', description: 'After polling, EVMs are sealed in the presence of candidates/agents and stored in strong-rooms under 24×7 security including CCTV surveillance, until counting day.' },
       { title: 'VVPAT Verification',          description: 'Every EVM is connected to a Voter Verifiable Paper Audit Trail (VVPAT) machine. A paper slip showing the candidate voted for is displayed for 7 seconds, then stored in a sealed compartment.' },
       { title: 'First-Past-the-Post System',  description: 'India uses a simple majority or "First-Past-the-Post" (FPTP) system. The candidate with the highest number of votes wins, regardless of whether they have an absolute majority.' },
     ],
