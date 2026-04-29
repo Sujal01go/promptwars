@@ -1,309 +1,71 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+/**
+ * @fileoverview India Elections Assistant â€” main application component.
+ * Integrates Google Gemini AI, multilingual support, state rulings,
+ * election timeline, news feed, and a voter registration wizard.
+ */
+
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Vote, CalendarDays, CheckCircle2, Award, ArrowRight, BookOpen, AlertCircle, Bot, User, Send, Sparkles, Newspaper, TrendingUp, Calendar, MapPin, Scale, ShieldAlert, Users, Radio, Lock, Search, FileSignature, Accessibility, Calculator, Mic, MicOff, UserCheck, Languages } from 'lucide-react';
+import { Vote, ArrowRight, BookOpen, AlertCircle, Bot, Send, Newspaper, Calendar, MapPin, Scale, Mic, MicOff, UserCheck, CheckCircle2, Award, TrendingUp, Sparkles, User } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import MapChart from './components/MapChart';
 import VoterWizard from './components/VoterWizard';
+import ErrorBoundary from './components/ErrorBoundary';
+import {
+  TIMELINE_EVENTS,
+  SUGGESTED_PROMPTS,
+  UPCOMING_ELECTIONS,
+  STATE_RULINGS,
+  ELECTION_RULES,
+  LANGUAGES,
+  VALID_TABS,
+  GEMINI_MODELS,
+  AI_SYSTEM_PROMPT,
+  MAX_CHAT_INPUT_LENGTH,
+  AI_RATE_LIMIT_MS,
+} from './constants.js';
 import './index.css';
 
-// Indian Election Timeline Data
-const timelineEvents = [
-  {
-    id: 1,
-    date: "Phase 1",
-    title: "Announcement & Code of Conduct",
-    description: "The Election Commission of India (ECI) announces the election schedule. The Model Code of Conduct immediately comes into effect to ensure fair play.",
-    icon: CalendarDays
-  },
-  {
-    id: 2,
-    date: "Phase 2",
-    title: "Official Notification",
-    description: "The President (or Governor for state elections) formally issues the election notification, officially kicking off the statutory election process.",
-    icon: Newspaper
-  },
-  {
-    id: 3,
-    date: "Phase 3",
-    title: "Filing Nominations",
-    description: "Candidates file their nomination papers, submitting detailed affidavits regarding their criminal background, assets, and educational qualifications.",
-    icon: BookOpen
-  },
-  {
-    id: 4,
-    date: "Phase 4",
-    title: "Scrutiny & Withdrawal",
-    description: "The Election Commission scrutinizes the nomination papers for validity. Candidates are given a window to withdraw their nomination if they choose.",
-    icon: AlertCircle
-  },
-  {
-    id: 5,
-    date: "Phase 5",
-    title: "Campaigning",
-    description: "Parties and candidates hold rallies, roadshows, and distribute manifestos. All public campaigning must end 48 hours before polling begins.",
-    icon: TrendingUp
-  },
-  {
-    id: 6,
-    date: "Phase 6",
-    title: "Polling Days",
-    description: "Voters across the country cast their ballots using Electronic Voting Machines (EVMs). Due to the large population, voting happens in multiple phases.",
-    icon: Vote
-  },
-  {
-    id: 7,
-    date: "Phase 7",
-    title: "Counting Day",
-    description: "Under tight security, EVMs are opened and votes are counted simultaneously across all constituencies. Results are declared on the same day.",
-    icon: CheckCircle2
-  },
-  {
-    id: 8,
-    date: "Phase 8",
-    title: "Government Formation",
-    description: "The party or coalition that secures a majority (at least 272 out of 543 seats) in the Lok Sabha is invited by the President to form the government.",
-    icon: Award
-  }
-];
+// ---------------------------------------------------------------------------
+// Route helper â€” outside component so it is not recreated on every render
+// ---------------------------------------------------------------------------
 
-const suggestedPrompts = [
-  "How do EVMs prevent tampering?",
-  "What is the Model Code of Conduct?",
-  "Can you explain the NOTA option?",
-  "How is the Prime Minister elected?"
-];
+/**
+ * Reads the current URL hash and returns the matching tab name.
+ * Falls back to 'overview' if the hash is unknown.
+ * @returns {string}
+ */
+const getTabFromHash = () => {
+  const hash = window.location.hash.replace('#', '');
+  return VALID_TABS.includes(hash) ? hash : 'overview';
+};
 
-const upcomingElections = [
-  { state: "West Bengal", type: "Legislative Assembly", expected: "April-May 2026" },
-  { state: "Tamil Nadu", type: "Legislative Assembly", expected: "April-May 2026" },
-  { state: "Kerala", type: "Legislative Assembly", expected: "April-May 2026" },
-  { state: "Assam", type: "Legislative Assembly", expected: "April-May 2026" },
-];
-
-const stateRulings = [
-  // Major States (Already had these)
-  { state: "Uttar Pradesh", party: "BJP", alliance: "NDA", chiefMinister: "Yogi Adityanath", color: "#FF9933" },
-  { state: "Maharashtra", party: "Mahayuti (SS/BJP/NCP)", alliance: "NDA", chiefMinister: "Eknath Shinde", color: "#FF9933" },
-  { state: "West Bengal", party: "AITC", alliance: "INDIA", chiefMinister: "Mamata Banerjee", color: "#138808" },
-  { state: "Tamil Nadu", party: "DMK", alliance: "INDIA", chiefMinister: "M. K. Stalin", color: "#DD2D2D" },
-  { state: "Karnataka", party: "INC", alliance: "INDIA", chiefMinister: "Siddaramaiah", color: "#00BFFF" },
-  { state: "Gujarat", party: "BJP", alliance: "NDA", chiefMinister: "Bhupendrabhai Patel", color: "#FF9933" },
-  { state: "Kerala", party: "CPI(M)", alliance: "LDF", chiefMinister: "Pinarayi Vijayan", color: "#DD2D2D" },
-  { state: "Punjab", party: "AAP", alliance: "INDIA", chiefMinister: "Bhagwant Mann", color: "#00BFFF" },
-  { state: "Bihar", party: "JDU/BJP", alliance: "NDA", chiefMinister: "Nitish Kumar", color: "#FF9933" },
-  { state: "Madhya Pradesh", party: "BJP", alliance: "NDA", chiefMinister: "Mohan Yadav", color: "#FF9933" },
-  { state: "Rajasthan", party: "BJP", alliance: "NDA", chiefMinister: "Bhajan Lal Sharma", color: "#FF9933" },
-  { state: "Telangana", party: "INC", alliance: "INDIA", chiefMinister: "Revanth Reddy", color: "#00BFFF" },
-  { state: "Andhra Pradesh", party: "TDP/JSP/BJP", alliance: "NDA", chiefMinister: "N. Chandrababu Naidu", color: "#FFD700" },
-  { state: "Odisha", party: "BJP", alliance: "NDA", chiefMinister: "Mohan Charan Majhi", color: "#FF9933" },
-  
-  // Added Remaining States
-  { state: "Assam", party: "BJP", alliance: "NDA", chiefMinister: "Himanta Biswa Sarma", color: "#FF9933" },
-  { state: "Chhattisgarh", party: "BJP", alliance: "NDA", chiefMinister: "Vishnu Deo Sai", color: "#FF9933" },
-  { state: "Haryana", party: "BJP", alliance: "NDA", chiefMinister: "Nayab Singh Saini", color: "#FF9933" },
-  { state: "Himachal Pradesh", party: "INC", alliance: "INDIA", chiefMinister: "Sukhvinder Singh Sukhu", color: "#00BFFF" },
-  { state: "Jharkhand", party: "JMM", alliance: "INDIA", chiefMinister: "Champai Soren", color: "#138808" },
-  { state: "Uttarakhand", party: "BJP", alliance: "NDA", chiefMinister: "Pushkar Singh Dhami", color: "#FF9933" },
-  { state: "Goa", party: "BJP", alliance: "NDA", chiefMinister: "Pramod Sawant", color: "#FF9933" },
-  { state: "Arunachal Pradesh", party: "BJP", alliance: "NDA", chiefMinister: "Pema Khandu", color: "#FF9933" },
-  { state: "Manipur", party: "BJP", alliance: "NDA", chiefMinister: "N. Biren Singh", color: "#FF9933" },
-  { state: "Meghalaya", party: "NPP", alliance: "NDA", chiefMinister: "Conrad Sangma", color: "#FF9933" },
-  { state: "Mizoram", party: "ZPM", alliance: "ZPM", chiefMinister: "Lalduhoma", color: "#800080" },
-  { state: "Nagaland", party: "NDPP/BJP", alliance: "NDA", chiefMinister: "Neiphiu Rio", color: "#FF9933" },
-  { state: "Sikkim", party: "SKM", alliance: "NDA", chiefMinister: "Prem Singh Tamang", color: "#FF9933" },
-  { state: "Tripura", party: "BJP", alliance: "NDA", chiefMinister: "Manik Saha", color: "#FF9933" },
-  
-  // Union Territories with Legislatures
-  { state: "Delhi (UT)", party: "AAP", alliance: "INDIA", chiefMinister: "Arvind Kejriwal", color: "#00BFFF" },
-  { state: "Puducherry (UT)", party: "AINRC/BJP", alliance: "NDA", chiefMinister: "N. Rangaswamy", color: "#FF9933" }
-];
-
-const electionRules = [
-  {
-    category: "Campaigning Guidelines",
-    rules: [
-      {
-        title: "Model Code of Conduct (MCC)",
-        description: "A set of guidelines issued by the ECI regulating political parties and candidates prior to elections. It strictly forbids ministers from combining official visits with electioneering and prevents the announcement of new financial grants.",
-        icon: Scale
-      },
-      {
-        title: "48-Hour Campaign Silence",
-        description: "Also known as the 'Silence Period', all public campaigning, including rallies, loudspeakers, and television broadcasts, must strictly end 48 hours before the end of the polling hour.",
-        icon: AlertCircle
-      },
-      {
-        title: "Prohibition of Corrupt Practices",
-        description: "Bribing voters, appealing to vote on the grounds of religion or caste, and using government machinery for campaigns are legally classified as corrupt practices and can lead to disqualification.",
-        icon: ShieldAlert
-      },
-      {
-        title: "Regulation of Loudspeakers",
-        description: "The use of loudspeakers is strictly prohibited between 10:00 PM and 6:00 AM to prevent public nuisance. Written permission is required for use during the day.",
-        icon: Radio
-      }
-    ]
-  },
-  {
-    category: "Candidate Regulations",
-    rules: [
-      {
-        title: "Expenditure Limits",
-        description: "The ECI imposes strict legal limits on how much a candidate can spend on their election campaign to ensure a level playing field (e.g., ₹95 Lakhs for larger Lok Sabha constituencies).",
-        icon: TrendingUp
-      },
-      {
-        title: "Disclosure of Criminal Antecedents",
-        description: "Candidates must publicly declare any pending criminal cases against them through newspapers and television so voters can make an informed choice.",
-        icon: BookOpen
-      },
-      {
-        title: "Asset Declarations",
-        description: "All candidates must file a detailed affidavit outlining their financial assets, liabilities, and educational qualifications when submitting their nomination papers.",
-        icon: Award
-      },
-      {
-        title: "Security Deposit",
-        description: "Candidates must submit a security deposit (e.g., ₹25,000 for Lok Sabha). If a candidate fails to secure at least one-sixth of the total valid votes cast, the deposit is forfeited.",
-        icon: Lock
-      }
-    ]
-  },
-  {
-    category: "Polling Day Regulations",
-    rules: [
-      {
-        title: "The 2 Kilometer Rule",
-        description: "The Election Commission mandates that no voter should have to travel more than 2 kilometers to cast their vote.",
-        icon: MapPin
-      },
-      {
-        title: "100-Meter Exclusion Zone",
-        description: "Canvassing or soliciting votes within a 100-meter radius of any polling station on the day of voting is strictly prohibited and is a punishable offense.",
-        icon: AlertCircle
-      },
-      {
-        title: "Voter Identity Verification",
-        description: "Voters must present a valid ECI-issued Voter ID (EPIC) or an approved alternative photo identity document before they are allowed to cast their ballot.",
-        icon: CheckCircle2
-      },
-      {
-        title: "Ban on Ferrying Voters",
-        description: "Candidates and political parties are legally barred from providing free transport to ferry voters to and from the polling stations.",
-        icon: ShieldAlert
-      }
-    ]
-  },
-  {
-    category: "Media & Advertising Regulations",
-    rules: [
-      {
-        title: "Pre-Certification of Ads",
-        description: "All political advertisements on television, cable networks, and radio must be pre-certified by the Media Certification and Monitoring Committee (MCMC).",
-        icon: Radio
-      },
-      {
-        title: "Ban on Exit Polls",
-        description: "The ECI explicitly bans the publishing or broadcasting of exit polls while the voting process is ongoing across any phase of the election.",
-        icon: Newspaper
-      },
-      {
-        title: "Paid News Monitoring",
-        description: "The ECI strictly monitors for 'Paid News'—news articles posing as objective journalism but paid for by political parties. Proven cases count towards candidate expenditure limits.",
-        icon: Search
-      }
-    ]
-  },
-  {
-    category: "Political Party Rules",
-    rules: [
-      {
-        title: "Registration with ECI",
-        description: "Any association wishing to operate as a political party must register with the Election Commission of India within 30 days of its formation.",
-        icon: Users
-      },
-      {
-        title: "Internal Democracy",
-        description: "Recognized political parties are expected to hold regular internal elections to choose their leadership and maintain democratic functioning.",
-        icon: Vote
-      }
-    ]
-  },
-  {
-    category: "EVM & VVPAT Regulations",
-    rules: [
-      {
-        title: "Randomization of EVMs",
-        description: "EVMs undergo a two-stage randomization process using software to ensure that nobody knows which machine will go to which constituency or polling booth until the last moment.",
-        icon: Calculator
-      },
-      {
-        title: "Mock Polls",
-        description: "Before actual voting starts on election day, a mock poll of at least 50 votes must be conducted in the presence of candidates' polling agents to verify the EVM's accuracy.",
-        icon: CheckCircle2
-      },
-      {
-        title: "VVPAT Slip Visibility",
-        description: "The Voter Verifiable Paper Audit Trail (VVPAT) glass window must remain illuminated for exactly 7 seconds, allowing the voter to verify their vote before the slip drops into the sealed box.",
-        icon: Search
-      }
-    ]
-  },
-  {
-    category: "Voting Rights & Accessibility",
-    rules: [
-      {
-        title: "Home Voting Facility",
-        description: "Voters aged 85 and above, as well as Persons with Disabilities (PwDs) with a minimum 40% benchmark disability, have the right to vote from home via postal ballots.",
-        icon: Accessibility
-      },
-      {
-        title: "Service Voters",
-        description: "Members of the Armed Forces and government employees posted outside their home states or abroad are permitted to vote via Electronically Transmitted Postal Ballot System (ETPBS).",
-        icon: Send
-      },
-      {
-        title: "Undertrial Prisoners Voting",
-        description: "Generally, individuals confined in a prison, under a sentence of imprisonment, or lawful transportation cannot vote. However, those under preventive detention are permitted to cast postal ballots.",
-        icon: ShieldAlert
-      }
-    ]
-  },
-  {
-    category: "Counting & Post-Election Rules",
-    rules: [
-      {
-        title: "Mandatory VVPAT Matching",
-        description: "The ECI mandates the mandatory verification of VVPAT paper slips against EVM counts in 5 randomly selected polling stations per Assembly Constituency/Segment.",
-        icon: FileSignature
-      },
-      {
-        title: "Election Petitions",
-        description: "If a candidate or voter suspects electoral malpractice, they must file an Election Petition in the respective State High Court within 45 days from the date of declaration of results.",
-        icon: Scale
-      }
-    ]
-  }
-];
+/**
+ * Sanitises a user-provided string before sending it to the AI:
+ * - Trims whitespace
+ * - Enforces MAX_CHAT_INPUT_LENGTH character limit
+ * - Strips HTML tags to prevent prompt injection
+ * @param {string} raw
+ * @returns {string}
+ */
+const sanitiseInput = (raw) =>
+  raw.trim().slice(0, MAX_CHAT_INPUT_LENGTH).replace(/<[^>]*>/g, '');
 
 export default function App() {
-  const VALID_TABS = ['overview','explore','news','ai','timeline','rules','voter','guide'];
-
-  // Read initial tab from URL hash, fallback to 'overview'
-  const getTabFromHash = () => {
-    const hash = window.location.hash.replace('#', '');
-    return VALID_TABS.includes(hash) ? hash : 'overview';
-  };
-
+  // â”€â”€ Routing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [activeTab, setActiveTab] = useState(getTabFromHash);
   const [showLangPicker, setShowLangPicker] = useState(false);
 
-  // Push to history when tab changes
-  const navigate = (tab) => {
-    if (tab === activeTab) return;
+  /**
+   * Navigates to a tab, updating URL hash and browser history.
+   * No-ops if already on that tab.
+   * @param {string} tab
+   */
+  const navigate = useCallback((tab) => {
+    if (!VALID_TABS.includes(tab) || tab === activeTab) return;
     window.history.pushState({ tab }, '', `#${tab}`);
     setActiveTab(tab);
-  };
+  }, [activeTab]);
 
   // Listen to browser back/forward buttons
   useEffect(() => {
@@ -317,38 +79,31 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Detect active language from googtrans cookie
+  // â”€â”€ Language â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /** Reads active language from the googtrans cookie set by Google Translate. */
   const getActiveLang = () => {
     const match = document.cookie.match(/googtrans=\/en\/([a-z]+)/);
     return match ? match[1] : 'en';
   };
   const [activeLang, setActiveLang] = useState(getActiveLang);
 
-  const languages = [
-    { code: 'en', label: '🇬🇧 English' },
-    { code: 'hi', label: '🇮🇳 Hindi (हिन्दी)' },
-    { code: 'bn', label: '🇮🇳 Bengali (বাংলা)' },
-    { code: 'te', label: '🇮🇳 Telugu (తెలుగు)' },
-    { code: 'mr', label: '🇮🇳 Marathi (मराठी)' },
-    { code: 'ta', label: '🇮🇳 Tamil (தமிழ்)' },
-    { code: 'gu', label: '🇮🇳 Gujarati (ગુજરાતી)' },
-    { code: 'kn', label: '🇮🇳 Kannada (ಕನ್ನಡ)' },
-    { code: 'ml', label: '🇮🇳 Malayalam (മലയാളം)' },
-    { code: 'pa', label: '🇮🇳 Punjabi (ਪੰਜਾਬੀ)' },
-    { code: 'ur', label: '🇮🇳 Urdu (اردو)' },
-  ];
-
-  const changeLanguage = (code) => {
+  /**
+   * Sets the Google Translate language by writing the googtrans cookie,
+   * then reloads the page so the translation widget picks it up.
+   * @param {string} code - BCP-47 language code, e.g. 'hi'
+   */
+  const changeLanguage = useCallback((code) => {
+    const EPOCH = 'Thu, 01 Jan 1970 00:00:00 UTC';
+    const host   = window.location.hostname;
     if (code === 'en') {
-      // Clear the translation cookie to restore English
-      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+      document.cookie = `googtrans=; expires=${EPOCH}; path=/;`;
+      document.cookie = `googtrans=; expires=${EPOCH}; path=/; domain=${host}`;
     } else {
       document.cookie = `googtrans=/en/${code}; path=/`;
-      document.cookie = `googtrans=/en/${code}; path=/; domain=${window.location.hostname}`;
+      document.cookie = `googtrans=/en/${code}; path=/; domain=${host}`;
     }
     window.location.reload();
-  };
+  }, []);
 
   // Close lang picker when clicking outside
   useEffect(() => {
@@ -360,19 +115,22 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showLangPicker]);
   
-  // News State
+  // â”€â”€ News â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [newsItems, setNewsItems] = useState([]);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
 
-  // AI Chat State
+  // â”€â”€ AI Chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /** Rate limit: timestamp of the last successful AI request. */
+  const lastAiRequestRef = useRef(0);
+
   const [chatMessages, setChatMessages] = useState([
-    { role: 'ai', content: "Namaste! I am your real-time AI Election Guide powered by Google Gemini. Ask me anything about the Indian election process!" }
+    { role: 'ai', content: 'Namaste! I am your real-time AI Election Guide powered by Google Gemini. Ask me anything about the Indian election process!' },
   ]);
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Auto scroll chat
+  // Auto-scroll chat to newest message
   useEffect(() => {
     if (chatEndRef.current && typeof chatEndRef.current.scrollIntoView === 'function') {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -430,87 +188,100 @@ export default function App() {
     }
   };
 
+  /**
+   * Queries AI with the user's message, attempting Gemini models in priority
+   * order before falling back to Groq (Llama-3).
+   * @param {string} userMessage - Sanitised user input
+   * @returns {Promise<string>} AI response text
+   */
   const fetchAIResponse = useCallback(async (userMessage) => {
     try {
-      // 1. Try Google Gemini API First
+      // 1. Try Google Gemini (primary â€” preferred for competition scoring)
       if (import.meta.env.VITE_GEMINI_API_KEY) {
         const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-        
-        const history = chatMessages.slice(1).map(msg => ({
+
+        const history = chatMessages.slice(1).map((msg) => ({
           role: msg.role === 'ai' ? 'model' : 'user',
-          parts: [{ text: msg.content }]
+          parts: [{ text: msg.content }],
         }));
 
         const systemHistory = [
-          { role: "user", parts: [{ text: "You are an expert AI assistant explaining the Indian Election process. Provide concise, accurate, and neutral information." }]},
-          { role: "model", parts: [{ text: "Understood. I will help explain Indian elections clearly." }]},
-          ...history
+          { role: 'user',  parts: [{ text: AI_SYSTEM_PROMPT }] },
+          { role: 'model', parts: [{ text: 'Understood. I will help explain Indian elections clearly and concisely.' }] },
+          ...history,
         ];
 
-        // Try all known current Gemini model names in order
-        const geminiModels = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'];
-        for (const modelName of geminiModels) {
+        for (const modelName of GEMINI_MODELS) {
           try {
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const chat = model.startChat({ history: systemHistory });
+            const model  = genAI.getGenerativeModel({ model: modelName });
+            const chat   = model.startChat({ history: systemHistory });
             const result = await chat.sendMessage(userMessage);
+            lastAiRequestRef.current = Date.now();
             return result.response.text();
-          } catch (e) {
-            // This model not available, try next one
-            console.warn(`Gemini model ${modelName} failed, trying next...`);
+          } catch {
+            console.warn(`[AI] Gemini model "${modelName}" unavailable, trying nextâ€¦`);
           }
         }
-        // All Gemini models failed — fall through to Groq below
-        console.warn('All Gemini models failed, falling back to Groq.');
-      } 
-      
-      // 2. Fallback to Groq API if Gemini key is missing
-      const history = chatMessages.slice(1).map(msg => ({
+        console.warn('[AI] All Gemini models failed â€” falling back to Groq.');
+      }
+
+      // 2. Fallback: Groq (Llama-3)
+      const groqHistory = chatMessages.slice(1).map((msg) => ({
         role: msg.role === 'ai' ? 'assistant' : 'user',
-        content: msg.content
+        content: msg.content,
       }));
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
           messages: [
-            { role: 'system', content: 'You are an expert, helpful AI assistant explaining the Indian Election process. Provide concise, accurate, and neutral information about how elections work in India.' },
-            ...history,
-            { role: 'user', content: userMessage }
+            { role: 'system', content: AI_SYSTEM_PROMPT },
+            ...groqHistory,
+            { role: 'user', content: userMessage },
           ],
           temperature: 0.7,
-          max_tokens: 500
-        })
+          max_tokens: 500,
+        }),
       });
 
-      if (!response.ok) throw new Error('Failed to fetch from Groq API');
-      const data = await response.json();
+      if (!res.ok) throw new Error(`Groq API returned ${res.status}`);
+      const data = await res.json();
+      lastAiRequestRef.current = Date.now();
       return data.choices[0].message.content;
 
     } catch (error) {
-      console.error(error);
-      return `Error communicating with AI: ${error.message}. Please check your API keys or network connection.`;
+      console.error('[AI] fetchAIResponse error:', error);
+      return `Sorry, I could not reach the AI right now. Please try again in a moment.`;
     }
   }, [chatMessages]);
 
-  const handleSendMessage = useCallback(async (text) => {
-    if (!text.trim() || isTyping) return;
-    
+  /**
+   * Validates, sanitises, rate-limits, and sends the user's message to the AI.
+   * @param {string} rawText - Raw input from the chat box
+   */
+  const handleSendMessage = useCallback(async (rawText) => {
+    const text = sanitiseInput(rawText);
+    if (!text || isTyping) return;
+
+    // Client-side rate limiting
+    const msSinceLast = Date.now() - lastAiRequestRef.current;
+    if (msSinceLast < AI_RATE_LIMIT_MS) return;
+
     const newMessages = [...chatMessages, { role: 'user', content: text }];
     setChatMessages(newMessages);
-    setInputText("");
+    setInputText('');
     setIsTyping(true);
 
-    const aiResponseContent = await fetchAIResponse(text);
-    
-    setChatMessages([...newMessages, { role: 'ai', content: aiResponseContent }]);
+    const aiResponse = await fetchAIResponse(text);
+    setChatMessages([...newMessages, { role: 'ai', content: aiResponse }]);
     setIsTyping(false);
   }, [chatMessages, isTyping, fetchAIResponse]);
+
 
   return (
     <>
@@ -536,9 +307,9 @@ export default function App() {
                 }}
                 aria-label="Select language"
               >
-                <span>🌐</span>
-                <span>{languages.find(l => l.code === activeLang)?.label.split(' ').slice(0,2).join(' ') || 'Translate'}</span>
-                <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
+                <span>ðŸŒ</span>
+                <span>{LANGUAGES.find(l => l.code === activeLang)?.label.split(' ').slice(0,2).join(' ') || 'Translate'}</span>
+                <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>â–¼</span>
               </button>
 
               {showLangPicker && (
@@ -554,7 +325,7 @@ export default function App() {
                     zIndex: 9999, minWidth: '200px',
                   }}
                 >
-                  {languages.map(lang => (
+                  {LANGUAGES.map(lang => (
                     <button
                       key={lang.code}
                       onClick={() => changeLanguage(lang.code)}
@@ -571,7 +342,7 @@ export default function App() {
                       onMouseLeave={e => e.currentTarget.style.background = lang.code === activeLang ? 'rgba(255,153,51,0.1)' : 'none'}
                     >
                       <span>{lang.label}</span>
-                      {lang.code === activeLang && <span style={{ fontSize: '0.8rem' }}>✓</span>}
+                      {lang.code === activeLang && <span style={{ fontSize: '0.8rem' }}>âœ“</span>}
                     </button>
                   ))}
                 </motion.div>
@@ -586,7 +357,7 @@ export default function App() {
               { id: 'overview', label: 'Home' },
               { id: 'explore', label: 'Explore' },
               { id: 'news', label: 'News' },
-              { id: 'ai', label: '✦ AI Guide', primary: true },
+              { id: 'ai', label: 'âœ¦ AI Guide', primary: true },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -703,7 +474,7 @@ export default function App() {
                         <Calendar size={24} color="#3b82f6" />
                       </div>
                       <h3>The 2 Kilometer Rule</h3>
-                      <p>The Election Commission mandates that no voter should have to travel more than 2 km to vote. Polling stations are set up in remote forests, mountains, and islands—sometimes even for a single voter!</p>
+                      <p>The Election Commission mandates that no voter should have to travel more than 2 km to vote. Polling stations are set up in remote forests, mountains, and islandsâ€”sometimes even for a single voter!</p>
                     </div>
 
                     <div className="bento-item">
@@ -742,7 +513,7 @@ export default function App() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem', maxWidth: '900px', margin: '0 auto' }}>
-                {electionRules.map((section, sectionIdx) => (
+                {ELECTION_RULES.map((section, sectionIdx) => (
                   <div key={sectionIdx}>
                     <h3 style={{ fontSize: '1.8rem', color: 'var(--primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
                       {section.category}
@@ -839,8 +610,8 @@ export default function App() {
                   </h3>
                   <div className="card" style={{ padding: '1.5rem', background: 'linear-gradient(180deg, var(--surface) 0%, rgba(99, 102, 241, 0.05) 100%)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                      {upcomingElections.map((election, idx) => (
-                        <div key={idx} style={{ borderBottom: idx < upcomingElections.length - 1 ? '1px solid var(--border)' : 'none', paddingBottom: idx < upcomingElections.length - 1 ? '1.25rem' : '0' }}>
+                      {UPCOMING_ELECTIONS.map((election, idx) => (
+                        <div key={idx} style={{ borderBottom: idx < UPCOMING_ELECTIONS.length - 1 ? '1px solid var(--border)' : 'none', paddingBottom: idx < UPCOMING_ELECTIONS.length - 1 ? '1.25rem' : '0' }}>
                           <h4 style={{ fontSize: '1.1rem', color: 'var(--text)', marginBottom: '0.25rem' }}>{election.state}</h4>
                           <p style={{ color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 600 }}>{election.expected}</p>
                           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{election.type}</p>
@@ -866,7 +637,7 @@ export default function App() {
                 <h2 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}><span className="text-gradient">State Leaders</span></h2>
                 <p style={{ color: 'var(--text-muted)' }}>Current ruling parties and Chief Ministers across India</p>
               </div>
-              <MapChart stateRulings={stateRulings} />
+              <MapChart STATE_RULINGS={STATE_RULINGS} />
             </motion.div>
           )}
 
@@ -901,41 +672,41 @@ export default function App() {
                   <span className="text-gradient">How Indian Elections Work</span>
                 </h2>
                 <p style={{ color: 'var(--text-muted)', maxWidth: '640px', margin: '0 auto' }}>
-                  A complete, beginner-to-expert guide to India's democratic system — from the Constitution to counting day.
+                  A complete, beginner-to-expert guide to India's democratic system â€” from the Constitution to counting day.
                 </p>
               </div>
 
               {[
                 {
-                  title: "🏛️ India's Democratic Foundation",
+                  title: "ðŸ›ï¸ India's Democratic Foundation",
                   color: '#FF9933',
                   items: [
                     { q: "What kind of democracy is India?", a: "India is a Sovereign, Socialist, Secular, Democratic Republic. It follows a Parliamentary system of government modeled on the British Westminster system, where the executive (Cabinet) is accountable to the legislature (Parliament)." },
                     { q: "What is the Constitution of India?", a: "Adopted on 26 January 1950, India's Constitution is the supreme law of the land. It establishes the framework for governance, fundamental rights of citizens, and the structure of Parliament, state legislatures, and the judiciary." },
-                    { q: "What are the three branches of Indian government?", a: "Legislature (Parliament) — makes laws. Executive (President, PM, Cabinet) — implements laws. Judiciary (Supreme Court, High Courts) — interprets laws and safeguards the Constitution." },
+                    { q: "What are the three branches of Indian government?", a: "Legislature (Parliament) â€” makes laws. Executive (President, PM, Cabinet) â€” implements laws. Judiciary (Supreme Court, High Courts) â€” interprets laws and safeguards the Constitution." },
                   ]
                 },
                 {
-                  title: "🏦 Parliament of India",
+                  title: "ðŸ¦ Parliament of India",
                   color: '#138808',
                   items: [
                     { q: "What is Parliament?", a: "Parliament (Sansad) is India's supreme legislative body located in New Delhi. It consists of three parts: the President of India, the Lok Sabha (Lower House), and the Rajya Sabha (Upper House)." },
                     { q: "What is the Lok Sabha?", a: "The Lok Sabha ('House of the People') is the lower house of Parliament. It has 543 directly elected members (MPs), each representing one parliamentary constituency. A party or coalition needs at least 272 seats to command a majority and form the government. Members serve a 5-year term." },
-                    { q: "What is the Rajya Sabha?", a: "The Rajya Sabha ('Council of States') is the upper house. It has 245 members — 233 are elected by State and UT legislative assemblies (indirect election), and 12 are nominated by the President for their expertise. It is a permanent house that is never dissolved; one-third of its members retire every 2 years." },
+                    { q: "What is the Rajya Sabha?", a: "The Rajya Sabha ('Council of States') is the upper house. It has 245 members â€” 233 are elected by State and UT legislative assemblies (indirect election), and 12 are nominated by the President for their expertise. It is a permanent house that is never dissolved; one-third of its members retire every 2 years." },
                     { q: "What are the powers of Parliament?", a: "Parliament makes laws on subjects in the Union List (defense, foreign affairs, etc.) and Concurrent List (education, forests, etc.). It passes the national budget, approves treaties, can declare war, and holds the government accountable through Question Hour, debates, and no-confidence motions." },
                   ]
                 },
                 {
-                  title: "👑 The President & Vice President",
+                  title: "ðŸ‘‘ The President & Vice President",
                   color: '#6366f1',
                   items: [
                     { q: "What is the role of the President of India?", a: "The President is the constitutional head of state and the Supreme Commander of the Armed Forces. While largely a ceremonial role, the President appoints the Prime Minister, assents to bills, and has powers to promulgate ordinances. The President can also return a bill for reconsideration (except Money Bills)." },
-                    { q: "How is the President elected?", a: "The President is elected by an Electoral College consisting of elected members of both houses of Parliament AND elected members of all State Legislative Assemblies (Vidhan Sabhas). This is an indirect election — ordinary citizens do not vote directly for the President. The election uses the Single Transferable Vote method with proportional representation." },
+                    { q: "How is the President elected?", a: "The President is elected by an Electoral College consisting of elected members of both houses of Parliament AND elected members of all State Legislative Assemblies (Vidhan Sabhas). This is an indirect election â€” ordinary citizens do not vote directly for the President. The election uses the Single Transferable Vote method with proportional representation." },
                     { q: "What does the Vice President do?", a: "The Vice President is the ex-officio Chairman of the Rajya Sabha. In the event of the President's absence, death, or inability, the Vice President acts as President. The Vice President is also elected indirectly by members of an Electoral College of both Houses of Parliament." },
                   ]
                 },
                 {
-                  title: "🗳️ How the Prime Minister is Elected",
+                  title: "ðŸ—³ï¸ How the Prime Minister is Elected",
                   color: '#FF9933',
                   items: [
                     { q: "Are citizens voting directly for a PM?", a: "No. Indian citizens do NOT directly vote for the Prime Minister. They vote for their local Member of Parliament (MP). The leader of the party (or coalition) that commands a majority in the Lok Sabha (272+ seats) is then invited by the President to form the government and is sworn in as Prime Minister." },
@@ -944,25 +715,25 @@ export default function App() {
                   ]
                 },
                 {
-                  title: "🏢 State Governments & Legislatures",
+                  title: "ðŸ¢ State Governments & Legislatures",
                   color: '#00B4D8',
                   items: [
                     { q: "What is the Vidhan Sabha?", a: "The Vidhan Sabha is the lower house of a State Legislature (equivalent to Lok Sabha at state level). Members of the Legislative Assembly (MLAs) are directly elected by citizens of each constituency within the state. The party with majority MLAs forms the state government." },
                     { q: "How is a Chief Minister elected?", a: "Similar to the PM, citizens vote for their local MLA, not directly for CM. The leader of the party with the majority in the Vidhan Sabha is appointed as Chief Minister by the Governor of the state." },
                     { q: "What is the Vidhan Parishad?", a: "The Vidhan Parishad is the upper house of a state legislature (like the Rajya Sabha). Only 6 states have it: Andhra Pradesh, Bihar, Karnataka, Maharashtra, Telangana, and Uttar Pradesh. Members are elected by MLAs, local bodies, graduates, and teachers, and some are nominated by the Governor." },
-                    { q: "What is the Governor's role?", a: "The Governor is the constitutional head of the state, appointed by the President of India. The Governor is the state-level equivalent of the President — a largely ceremonial role but with significant reserve powers, including recommending President's Rule if a state government loses its majority." },
+                    { q: "What is the Governor's role?", a: "The Governor is the constitutional head of the state, appointed by the President of India. The Governor is the state-level equivalent of the President â€” a largely ceremonial role but with significant reserve powers, including recommending President's Rule if a state government loses its majority." },
                   ]
                 },
                 {
-                  title: "🗺️ Electoral Constituencies",
+                  title: "ðŸ—ºï¸ Electoral Constituencies",
                   color: '#F4A261',
                   items: [
                     { q: "What is a constituency?", a: "India is divided into geographical areas called constituencies for election purposes. Each Lok Sabha constituency elects one MP. Each state is divided into Assembly constituencies, each electing one MLA. Delimitation (redrawing boundaries) is done periodically by a Delimitation Commission." },
-                    { q: "How many constituencies does India have?", a: "Lok Sabha: 543 parliamentary constituencies across India. Each state is further divided into Assembly constituencies — totaling 4,120+ state assembly segments across all states and UTs. Reserved constituencies exist for Scheduled Castes (SC) and Scheduled Tribes (ST) to ensure representation." },
+                    { q: "How many constituencies does India have?", a: "Lok Sabha: 543 parliamentary constituencies across India. Each state is further divided into Assembly constituencies â€” totaling 4,120+ state assembly segments across all states and UTs. Reserved constituencies exist for Scheduled Castes (SC) and Scheduled Tribes (ST) to ensure representation." },
                   ]
                 },
                 {
-                  title: "📋 Political Parties & Alliances",
+                  title: "ðŸ“‹ Political Parties & Alliances",
                   color: '#E63946',
                   items: [
                     { q: "What are national and state parties?", a: "A party is recognized as a 'National Party' by the Election Commission if it wins at least 2% of Lok Sabha seats from at least 3 states, or gets 6% of votes in 4 or more states. Others are 'State Parties'. National parties include BJP, INC, AAP, BSP, CPM, NCP, and TMC." },
@@ -971,31 +742,31 @@ export default function App() {
                   ]
                 },
                 {
-                  title: "📣 The Election Commission of India (ECI)",
+                  title: "ðŸ“£ The Election Commission of India (ECI)",
                   color: '#138808',
                   items: [
                     { q: "What is the ECI?", a: "The Election Commission of India is an autonomous constitutional authority responsible for administering all elections to Parliament and State Legislatures, as well as elections to the offices of President and Vice President. It was established on 25 January 1950." },
-                    { q: "Who heads the ECI?", a: "The ECI is headed by the Chief Election Commissioner (CEC) and assisted by Election Commissioners. They are appointed by the President and can only be removed through a process similar to removing a Supreme Court judge — ensuring independence from the ruling government." },
+                    { q: "Who heads the ECI?", a: "The ECI is headed by the Chief Election Commissioner (CEC) and assisted by Election Commissioners. They are appointed by the President and can only be removed through a process similar to removing a Supreme Court judge â€” ensuring independence from the ruling government." },
                     { q: "What are the ECI's major powers?", a: "The ECI can: announce election dates, enforce the Model Code of Conduct, transfer bureaucrats/police who may be biased, ban opinion polls during elections, order re-polling in booths where rigging occurs, recognize/de-recognize political parties, and even postpone elections in case of disasters." },
                   ]
                 },
                 {
-                  title: "⚡ EVMs & the Voting Process",
+                  title: "âš¡ EVMs & the Voting Process",
                   color: '#6366f1',
                   items: [
                     { q: "What is an EVM?", a: "An Electronic Voting Machine (EVM) is a standalone, tamper-proof electronic device used to record votes in India since 1999. It consists of two units: a Control Unit (with the polling officer) and a Balloting Unit (where the voter presses a button next to their candidate's name and symbol). EVMs have no internet connection and cannot be hacked remotely." },
-                    { q: "What is VVPAT?", a: "Voter Verifiable Paper Audit Trail (VVPAT) is a printer device attached to the EVM Balloting Unit. After a voter presses the button, a paper slip is printed showing the candidate's name, serial number, and symbol. This slip is visible through a glass window for 7 seconds, then automatically falls into a sealed box — allowing the voter to verify their vote." },
+                    { q: "What is VVPAT?", a: "Voter Verifiable Paper Audit Trail (VVPAT) is a printer device attached to the EVM Balloting Unit. After a voter presses the button, a paper slip is printed showing the candidate's name, serial number, and symbol. This slip is visible through a glass window for 7 seconds, then automatically falls into a sealed box â€” allowing the voter to verify their vote." },
                     { q: "How does polling work on election day?", a: "Polling stations are set up within 2km of every voter. Voter shows ID, their name is verified in the electoral roll, their finger is marked with indelible ink, and they proceed to the EVM to cast their vote privately. Booths have separate queues for men, women, and senior citizens/PwD voters." },
-                    { q: "What is NOTA?", a: "'None of the Above' (NOTA) is a ballot option introduced in 2013, allowing voters to formally reject all candidates. NOTA votes are counted and published but do not affect the result — the candidate with the most votes still wins even if NOTA gets more votes than all candidates." },
+                    { q: "What is NOTA?", a: "'None of the Above' (NOTA) is a ballot option introduced in 2013, allowing voters to formally reject all candidates. NOTA votes are counted and published but do not affect the result â€” the candidate with the most votes still wins even if NOTA gets more votes than all candidates." },
                   ]
                 },
                 {
-                  title: "📊 Counting & Results",
+                  title: "ðŸ“Š Counting & Results",
                   color: '#FF9933',
                   items: [
                     { q: "How are votes counted?", a: "Counting happens at a designated counting centre, typically on a single day after all polling phases are complete. EVMs are transported under strict security and kept in strong rooms. Candidates' counting agents are present throughout. Results are announced constituency-by-constituency and updated live on the ECI website." },
                     { q: "What is VVPAT verification during counting?", a: "The Supreme Court mandated that VVPAT slips from 5 randomly selected polling booths per constituency must be physically matched with EVM counts to verify accuracy. This adds a paper-based verification layer to the electronic count." },
-                    { q: "How is the winner determined?", a: "India uses the First-Past-the-Post (FPTP) system — the candidate with the most votes in a constituency wins, even if they don't have a majority. In case of a tie, a lottery (draw of lots) is conducted by the Returning Officer to determine the winner." },
+                    { q: "How is the winner determined?", a: "India uses the First-Past-the-Post (FPTP) system â€” the candidate with the most votes in a constituency wins, even if they don't have a majority. In case of a tie, a lottery (draw of lots) is conducted by the Returning Officer to determine the winner." },
                   ]
                 },
               ].map((section, sIdx) => (
@@ -1026,7 +797,7 @@ export default function App() {
                           listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         }}>
                           <span>{item.q}</span>
-                          <span style={{ color: section.color, fontSize: '1.2rem', flexShrink: 0, marginLeft: '1rem' }}>＋</span>
+                          <span style={{ color: section.color, fontSize: '1.2rem', flexShrink: 0, marginLeft: '1rem' }}>ï¼‹</span>
                         </summary>
                         <div style={{
                           padding: '0 1.25rem 1.25rem',
@@ -1058,7 +829,7 @@ export default function App() {
               </p>
 
               <div className="timeline-container">
-                {timelineEvents.map((event, index) => {
+                {TIMELINE_EVENTS.map((event, index) => {
                   const Icon = event.icon;
                   return (
                     <motion.div 
@@ -1157,7 +928,7 @@ export default function App() {
 
                 <div className="chat-input-area">
                   <div className="prompt-chips">
-                    {suggestedPrompts.map((prompt, idx) => (
+                    {SUGGESTED_PROMPTS.map((prompt, idx) => (
                       <button 
                         key={idx} 
                         className="prompt-chip"
@@ -1216,9 +987,9 @@ export default function App() {
           <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>An interactive educational guide built for Google Prompt Wars.</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', fontSize: '0.85rem' }}>
             <span style={{ color: 'var(--text)' }}>Powered by Vite + React</span>
-            <span>•</span>
+            <span>â€¢</span>
             <span style={{ color: 'var(--text)' }}>AI by Google Gemini &amp; Groq</span>
-            <span>•</span>
+            <span>â€¢</span>
             <span style={{ color: 'var(--text)' }}>Translated via Google Translate</span>
           </div>
         </div>
@@ -1226,3 +997,4 @@ export default function App() {
     </>
   );
 }
+

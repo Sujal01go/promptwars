@@ -1,9 +1,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+
+const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+
+  // Mock lucide-react with stubs during tests to avoid jsdom icon errors
+  resolve: {
+    alias: isTest
+      ? { 'lucide-react': resolve(__dirname, 'src/__mocks__/lucide-react.js') }
+      : {},
+  },
 
   // 🚀 EFFICIENCY: Build optimizations
   build: {
@@ -42,9 +52,13 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './setupTests.js',
+    alias: {
+      'lucide-react': resolve(__dirname, 'src/__mocks__/lucide-react.js'),
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
     },
   },
 });
+

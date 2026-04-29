@@ -2,12 +2,28 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 
+
+// Mock lucide-react — pure object factory, NO JSX (required for vitest hoisting)
+vi.mock('lucide-react', () => {
+  const stub = () => null;
+  return {
+    Vote: stub, ArrowRight: stub, BookOpen: stub, AlertCircle: stub,
+    Bot: stub, Send: stub, Newspaper: stub, Calendar: stub, MapPin: stub,
+    Scale: stub, Mic: stub, MicOff: stub, UserCheck: stub, CalendarDays: stub,
+    CheckCircle2: stub, Award: stub, TrendingUp: stub, ShieldAlert: stub,
+    Users: stub, Radio: stub, Lock: stub, Search: stub, FileSignature: stub,
+    Accessibility: stub, Calculator: stub, Sparkles: stub, User: stub,
+    Languages: stub, ChevronDown: stub, ChevronUp: stub, RefreshCw: stub,
+    Home: stub, Globe: stub, Info: stub, X: stub, Check: stub, Menu: stub,
+  };
+});
+
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }) => <div {...props}>{children}</div>,
-    h1: ({ children, ...props }) => <h1 {...props}>{children}</h1>,
-    p: ({ children, ...props }) => <p {...props}>{children}</p>,
+    h1:  ({ children, ...props }) => <h1 {...props}>{children}</h1>,
+    p:   ({ children, ...props }) => <p {...props}>{children}</p>,
   },
   AnimatePresence: ({ children }) => <>{children}</>,
 }));
