@@ -575,7 +575,7 @@ export default function App() {
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                       {section.rules.map((rule, idx) => {
-                        const Icon = rule.icon;
+                        const Icon = rule.icon || AlertCircle;
                         return (
                           <motion.div 
                             key={idx}
@@ -692,7 +692,7 @@ export default function App() {
                 <h2 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}><span className="text-gradient">State Leaders</span></h2>
                 <p style={{ color: 'var(--text-muted)' }}>Current ruling parties and Chief Ministers across India</p>
               </div>
-              <MapChart STATE_RULINGS={STATE_RULINGS} />
+              <MapChart stateRulings={STATE_RULINGS} />
               
               <div style={{ marginTop: '5rem' }}>
                 <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
@@ -910,7 +910,7 @@ export default function App() {
 
               <div className="timeline-container">
                 {TIMELINE_EVENTS.map((event, index) => {
-                  const Icon = event.icon;
+                  const Icon = event.icon || Calendar;
                   return (
                     <motion.div 
                       className="timeline-item" 

@@ -30,8 +30,8 @@
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https: blob: https://www.gstatic.com;
-      connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com https://newsapi.org https://www.google-analytics.com https://*.firebaseio.com https://*.googleapis.com https://news.google.com;
-      frame-src https://translate.google.com https://www.google.com/maps https://www.gstatic.com;
+      connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com https://newsapi.org https://www.google-analytics.com https://*.firebaseio.com https://*.googleapis.com https://news.google.com https://api.rss2json.com;
+      frame-src https://translate.google.com https://www.google.com https://www.google.com/maps https://www.gstatic.com;
     " />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
@@ -92,6 +92,6 @@
         }, 'google_translate_element');
       }
     </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   </body>
 </html>
