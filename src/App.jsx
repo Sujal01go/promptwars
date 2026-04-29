@@ -374,7 +374,7 @@ export default function App() {
 
   // Auto scroll chat
   useEffect(() => {
-    if (chatEndRef.current) {
+    if (chatEndRef.current && typeof chatEndRef.current.scrollIntoView === 'function') {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages, isTyping, activeTab]);
@@ -602,7 +602,7 @@ export default function App() {
         </div>
       </header>
 
-      <main>
+      <main id="main-content" aria-label="Main content">
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
             <motion.div
@@ -647,7 +647,7 @@ export default function App() {
                     <button className="btn btn-secondary" onClick={() => navigate('voter')}>
                       <UserCheck size={18} /> Am I Eligible?
                     </button>
-                    <button className="btn btn-secondary" onClick={() => navigate('guide')} style={{ background: 'linear-gradient(135deg, rgba(255,153,51,0.15), rgba(19,136,8,0.15))', border: '1px solid rgba(255,153,51,0.4)' }}>
+                    <button className="btn btn-secondary" onClick={() => navigate('guide')} aria-label="How Elections Work" style={{ background: 'linear-gradient(135deg, rgba(255,153,51,0.15), rgba(19,136,8,0.15))', border: '1px solid rgba(255,153,51,0.4)' }}>
                       <BookOpen size={18} /> How Elections Work
                     </button>
                   </motion.div>
@@ -1174,6 +1174,7 @@ export default function App() {
                         type="text" 
                         className="chat-input" 
                         placeholder="Ask a question about the Indian elections..."
+                        aria-label="Ask AI a question about Indian elections"
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(inputText)}

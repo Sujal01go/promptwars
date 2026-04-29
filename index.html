@@ -2,33 +2,85 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="An interactive AI-powered guide to the Indian Election process — timeline, state rulings, live news, and voter registration." />
-    <meta name="keywords" content="India Elections, Lok Sabha, ECI, Voter Registration, Election Rules, AI Guide" />
-    <meta property="og:title" content="India Elections Assistant" />
-    <meta property="og:description" content="Learn everything about Indian elections with an interactive AI guide, maps, and live news." />
+
+    <!-- ✅ SEO: Title & Description -->
+    <title>India Elections Assistant | AI-Powered Election Guide</title>
+    <meta name="description" content="An interactive AI-powered guide to the Indian Election process — Parliament, Lok Sabha, EVMs, state rulings, live news, voter registration and more." />
+    <meta name="keywords" content="India Elections, Lok Sabha, Rajya Sabha, ECI, Voter Registration, Election Rules, AI Guide, Indian Democracy, Parliament" />
+    <meta name="author" content="IndiaElections Assistant" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- ✅ Open Graph / Social -->
+    <meta property="og:title" content="India Elections Assistant — AI-Powered Election Guide" />
+    <meta property="og:description" content="Learn everything about Indian elections with an interactive AI guide, state leaders map, live news, and voter registration wizard." />
     <meta property="og:type" content="website" />
-    <title>India Elections Assistant</title>
-    <!-- Google Services Integration: Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Google Services Integration: Google Analytics (gtag.js) -->
+    <meta property="og:locale" content="en_IN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="India Elections Assistant" />
+    <meta name="twitter:description" content="AI-powered guide to Indian elections — Parliament, Lok Sabha, EVMs, and more." />
+
+    <!-- ✅ Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- 🔒 SECURITY: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://translate.google.com https://translate.googleapis.com https://www.google-analytics.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com https://newsapi.org https://www.google-analytics.com;
+      frame-src https://translate.google.com;
+    " />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+
+    <!-- 🚀 EFFICIENCY: DNS prefetch & preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://translate.googleapis.com" />
+    <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
+    <link rel="dns-prefetch" href="https://api.groq.com" />
+
+    <!-- ✅ GOOGLE SERVICES: Google Fonts (display=swap for performance) -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- ✅ GOOGLE SERVICES: Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-PROMPTWARS"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-PROMPTWARS');
+      gtag('config', 'G-PROMPTWARS', {
+        page_title: 'India Elections Assistant',
+        anonymize_ip: true,
+        cookie_flags: 'SameSite=None;Secure'
+      });
     </script>
+
+    <!-- 🚀 EFFICIENCY: Theme color & PWA hints -->
+    <meta name="theme-color" content="#0f0f12" />
+    <meta name="color-scheme" content="dark" />
   </head>
   <body>
+    <!-- ♿ ACCESSIBILITY: Skip to main content -->
+    <a href="#main-content" style="
+      position: absolute; left: -9999px; top: auto;
+      width: 1px; height: 1px; overflow: hidden;
+      background: #FF9933; color: #fff; padding: 0.5rem 1rem;
+      border-radius: 4px; font-weight: 600; z-index: 99999;
+      text-decoration: none;
+    " onfocus="this.style.left='16px'; this.style.top='16px'; this.style.width='auto'; this.style.height='auto';"
+       onblur="this.style.left='-9999px';">
+      Skip to main content
+    </a>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Google Translate Widget Init -->
+    <!-- ✅ GOOGLE SERVICES: Google Translate -->
     <script type="text/javascript">
       function googleTranslateElementInit() {
         new google.translate.TranslateElement({
